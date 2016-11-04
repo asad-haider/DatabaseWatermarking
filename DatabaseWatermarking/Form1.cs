@@ -23,15 +23,10 @@ namespace DatabaseWatermarking
         private void btnConnect_Click(object sender, EventArgs e)
         {
 
-            //string server = tbServer.Text;
-            //string username = tbUsername.Text;
-            //string password = tbPassword.Text;
-            //string database = tbDatabaseName.Text;
-
-            string server = ".";
+            string server = tbServer.Text;
             string username = tbUsername.Text;
             string password = tbPassword.Text;
-            string database = "StudentManagementSystem";
+            string database = tbDatabaseName.Text;
 
 
             conn = ConnectToDatabase(server, username, password, database);
@@ -52,64 +47,36 @@ namespace DatabaseWatermarking
                 comboTables.Enabled = true;
                 PopulateTableComboBox();
                 PopulateCompareTableComboBox();
+                grdTableData.DataSource = GetDataFromTable(comboTables.SelectedValue.ToString());
             }
         }
 
         private void btnWatermark_Click(object sender, EventArgs e)
         {
+            DataTable updatedDt = EncryptDatabase();
+            grdTableData.DataSource = updatedDt;
 
-            string waterMark = tbWatermark.Text;
+            string encryptedTableName = "Encrypted" + comboTables.SelectedValue.ToString();
+            string createTableQuery = GenerateSQL.CreateTABLE(encryptedTableName, updatedDt);
+            SqlCommand command = new SqlCommand(createTableQuery, conn);
+            command.ExecuteNonQuery();
 
-            if (!string.IsNullOrEmpty(waterMark))
+            foreach (DataRow row in updatedDt.Rows)
             {
-                char[] waterMarkArray = StringToByteArray(waterMark);
-
-                int counter = 0;
-
-                DataTable dt = (DataTable)grdTableData.DataSource;
-                DataTable updatedDt = dt.Clone();
-
-                foreach (DataRow row in dt.Rows)
-                {
-                    for (int i = 1; i < dt.Columns.Count; i++)
-                    {
-                        if (counter == waterMarkArray.Length)
-                        {
-                            counter = 0;
-                        }
-
-                        string columnData = row[i].ToString();
-                        char[] dataArray = StringToByteArray(columnData);
-                        dataArray[dataArray.Length - 1] = waterMarkArray[counter];
-                        counter++;
-                        row[i] = Encoding.UTF8.GetString(GetBytes(string.Join("", dataArray)));
-                    }
-                    updatedDt.ImportRow(row);
-                }
-
-                grdTableData.DataSource = updatedDt;
-
-                string encryptedTableName = "Encrypted" + comboTables.SelectedValue.ToString();
-                string createTableQuery = GenerateSQL.CreateTABLE(encryptedTableName, updatedDt);
-                SqlCommand command = new SqlCommand(createTableQuery, conn);
-                command.ExecuteNonQuery();
-
-                foreach (DataRow row in updatedDt.Rows)
-                {
-                    command = GenerateSQL.CreateInsertCommand(row, encryptedTableName);
-                    command.Connection = conn;
-                    command.ExecuteScalar();
-                }
-
-                PopulateTableComboBox();
-                PopulateCompareTableComboBox();
-
+                command = GenerateSQL.CreateInsertCommand(row, encryptedTableName);
+                command.Connection = conn;
+                command.ExecuteScalar();
             }
+
+            PopulateTableComboBox();
+            PopulateCompareTableComboBox();
+
         }
 
         private void comboTables_SelectedIndexChanged(object sender, EventArgs e)
         {
-            grdTableData.DataSource = GetDataFromSelectedTable();
+            string tableName = comboTables.SelectedValue.ToString();
+            grdTableData.DataSource = GetDataFromTable(tableName);
             comboSeries.Enabled = true;
             FillSeriesComboBox();
         }
@@ -117,7 +84,8 @@ namespace DatabaseWatermarking
         private void comboSeries_SelectedIndexChanged(object sender, EventArgs e)
         {
 
-            DataTable dt = GetDataFromSelectedTable();
+            string tableName = comboTables.SelectedValue.ToString();
+            DataTable dt = GetDataFromTable(tableName);
 
             if(dt != null)
             {
@@ -163,11 +131,78 @@ namespace DatabaseWatermarking
         private void btnDecrypt_Click(object sender, EventArgs e)
         {
 
+            DataTable compareWithdt = GetDataFromTable(comboCompareTable.Text);
+            DataTable selectedTable = GetDataFromTable(comboTables.Text);
+
+            int columnCount = 0;
+
+            float totalRecords = 0;
+            float matchedRecord = 0;
+
+            if (compareWithdt.Columns.Count == selectedTable.Columns.Count)
+            {
+
+                string waterMark = tbWatermark.Text;
+
+                if (!string.IsNullOrEmpty(waterMark))
+                {
+                    char[] waterMarkArray = StringToByteArray(waterMark);
+
+                    int counter = 0;
+
+                    DataTable temporarydDt = selectedTable.Clone();
+
+                    foreach (DataRow row in selectedTable.Rows)
+                    {
+                        for (int i = 1; i < selectedTable.Columns.Count; i++)
+                        {
+                            if (counter == waterMarkArray.Length)
+                            {
+                                counter = 0;
+                            }
+
+                            string columnData = row[i].ToString();
+                            char[] dataArray = StringToByteArray(columnData);
+                            dataArray[dataArray.Length - 1] = waterMarkArray[counter];
+                            counter++;
+                            row[i] = Encoding.UTF8.GetString(GetBytes(string.Join("", dataArray)));
+                        }
+                        temporarydDt.ImportRow(row);
+                    }
+
+                    columnCount = compareWithdt.Columns.Count;
+
+                    foreach (DataRow temporaryRow in temporarydDt.Rows)
+                    {
+                        string id = temporaryRow[0].ToString();
+
+                        DataRow compareRow = compareWithdt.Select("id = " + id).SingleOrDefault();
+
+                        for (int i = 0; i < columnCount; i++)
+                        {
+
+                            totalRecords++;
+
+                            string leftHandValue = temporaryRow[i].ToString();
+                            string rightHandValue = compareRow[i].ToString();
+
+                            if (leftHandValue.Equals(rightHandValue))
+                            {
+                                matchedRecord++;
+                            }
+                        }
+
+                    }
+
+                    lblMatchedRecords.Text = "" + matchedRecord + " record(s)";
+                    lblPercentage.Text = "" + ((matchedRecord/totalRecords) * 100) + " %";
+
+                }
+            }
         }
 
-        private DataTable GetDataFromSelectedTable()
+        private DataTable GetDataFromTable(string tableName)
         {
-            string tableName = comboTables.SelectedValue.ToString();
 
             SqlCommand command = new SqlCommand("SELECT * FROM " + tableName, conn);
 
@@ -178,7 +213,6 @@ namespace DatabaseWatermarking
             {
                 DataTable dt = new DataTable();
                 dt.Load(reader);
-                grdTableData.DataSource = dt;
 
                 columns = dt.Columns.Count;
                 rows = dt.Rows.Count;
@@ -232,6 +266,7 @@ namespace DatabaseWatermarking
 
         public void PopulateTableComboBox()
         {
+            comboTables.SelectedIndexChanged -= new EventHandler(comboTables_SelectedIndexChanged);
             DataTable schema = conn.GetSchema("Tables");
             List<string> TableNames = new List<string>();
             foreach (DataRow row in schema.Rows)
@@ -239,6 +274,7 @@ namespace DatabaseWatermarking
                 TableNames.Add(row[2].ToString());
             }
             comboTables.DataSource = TableNames;
+            comboTables.SelectedIndexChanged += new EventHandler(comboTables_SelectedIndexChanged);
         }
 
         public void PopulateCompareTableComboBox()
@@ -250,6 +286,43 @@ namespace DatabaseWatermarking
                 TableNames.Add(row[2].ToString());
             }
             comboCompareTable.DataSource = TableNames;
+        }
+
+        public DataTable EncryptDatabase()
+        {
+            string waterMark = tbWatermark.Text;
+
+            if (!string.IsNullOrEmpty(waterMark))
+            {
+                char[] waterMarkArray = StringToByteArray(waterMark);
+
+                int counter = 0;
+
+                DataTable dt = (DataTable)grdTableData.DataSource;
+                DataTable updatedDt = dt.Clone();
+
+                foreach (DataRow row in dt.Rows)
+                {
+                    for (int i = 1; i < dt.Columns.Count; i++)
+                    {
+                        if (counter == waterMarkArray.Length)
+                        {
+                            counter = 0;
+                        }
+
+                        string columnData = row[i].ToString();
+                        char[] dataArray = StringToByteArray(columnData);
+                        dataArray[dataArray.Length - 1] = waterMarkArray[counter];
+                        counter++;
+                        row[i] = Encoding.UTF8.GetString(GetBytes(string.Join("", dataArray)));
+                    }
+                    updatedDt.ImportRow(row);
+                }
+
+                return updatedDt;
+            }
+
+            return null;
         }
 
         public static class Prompt

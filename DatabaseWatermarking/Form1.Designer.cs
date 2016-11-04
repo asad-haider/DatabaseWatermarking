@@ -54,6 +54,10 @@
             this.label13 = new System.Windows.Forms.Label();
             this.comboCompareTable = new System.Windows.Forms.ComboBox();
             this.btnDecrypt = new System.Windows.Forms.Button();
+            this.label12 = new System.Windows.Forms.Label();
+            this.label14 = new System.Windows.Forms.Label();
+            this.lblMatchedRecords = new System.Windows.Forms.Label();
+            this.lblPercentage = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.grdTableData)).BeginInit();
             this.SuspendLayout();
             // 
@@ -234,7 +238,7 @@
             // 
             this.comboSeries.Enabled = false;
             this.comboSeries.FormattingEnabled = true;
-            this.comboSeries.Location = new System.Drawing.Point(568, 368);
+            this.comboSeries.Location = new System.Drawing.Point(580, 368);
             this.comboSeries.Name = "comboSeries";
             this.comboSeries.Size = new System.Drawing.Size(149, 21);
             this.comboSeries.TabIndex = 19;
@@ -251,7 +255,7 @@
             // 
             // tbWatermark
             // 
-            this.tbWatermark.Location = new System.Drawing.Point(568, 403);
+            this.tbWatermark.Location = new System.Drawing.Point(580, 403);
             this.tbWatermark.Name = "tbWatermark";
             this.tbWatermark.Size = new System.Drawing.Size(149, 20);
             this.tbWatermark.TabIndex = 21;
@@ -278,7 +282,7 @@
             // comboCompareTable
             // 
             this.comboCompareTable.FormattingEnabled = true;
-            this.comboCompareTable.Location = new System.Drawing.Point(568, 435);
+            this.comboCompareTable.Location = new System.Drawing.Point(580, 435);
             this.comboCompareTable.Name = "comboCompareTable";
             this.comboCompareTable.Size = new System.Drawing.Size(149, 21);
             this.comboCompareTable.TabIndex = 25;
@@ -293,11 +297,51 @@
             this.btnDecrypt.UseVisualStyleBackColor = true;
             this.btnDecrypt.Click += new System.EventHandler(this.btnDecrypt_Click);
             // 
+            // label12
+            // 
+            this.label12.AutoSize = true;
+            this.label12.Location = new System.Drawing.Point(485, 474);
+            this.label12.Name = "label12";
+            this.label12.Size = new System.Drawing.Size(90, 13);
+            this.label12.TabIndex = 27;
+            this.label12.Text = "Record Matched:";
+            // 
+            // label14
+            // 
+            this.label14.AutoSize = true;
+            this.label14.Location = new System.Drawing.Point(485, 497);
+            this.label14.Name = "label14";
+            this.label14.Size = new System.Drawing.Size(65, 13);
+            this.label14.TabIndex = 28;
+            this.label14.Text = "Percentage:";
+            // 
+            // lblMatchedRecords
+            // 
+            this.lblMatchedRecords.AutoSize = true;
+            this.lblMatchedRecords.Location = new System.Drawing.Point(577, 474);
+            this.lblMatchedRecords.Name = "lblMatchedRecords";
+            this.lblMatchedRecords.Size = new System.Drawing.Size(57, 13);
+            this.lblMatchedRecords.TabIndex = 29;
+            this.lblMatchedRecords.Text = "0 record(s)";
+            // 
+            // lblPercentage
+            // 
+            this.lblPercentage.AutoSize = true;
+            this.lblPercentage.Location = new System.Drawing.Point(577, 497);
+            this.lblPercentage.Name = "lblPercentage";
+            this.lblPercentage.Size = new System.Drawing.Size(24, 13);
+            this.lblPercentage.TabIndex = 30;
+            this.lblPercentage.Text = "0 %";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1031, 519);
+            this.Controls.Add(this.lblPercentage);
+            this.Controls.Add(this.lblMatchedRecords);
+            this.Controls.Add(this.label14);
+            this.Controls.Add(this.label12);
             this.Controls.Add(this.btnDecrypt);
             this.Controls.Add(this.comboCompareTable);
             this.Controls.Add(this.label13);
@@ -360,6 +404,10 @@
         private System.Windows.Forms.Label label13;
         private System.Windows.Forms.ComboBox comboCompareTable;
         private System.Windows.Forms.Button btnDecrypt;
+        private System.Windows.Forms.Label label12;
+        private System.Windows.Forms.Label label14;
+        private System.Windows.Forms.Label lblMatchedRecords;
+        private System.Windows.Forms.Label lblPercentage;
     }
 }
 
